@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>xflushx</title><link rel="stylesheet" href="popup.css"></head>
+<body><header><div class="logo">xf<span>+</span></div><div><h1>xflushx</h1><p>Your feed, your preferences.</p></div></header>
+<main>
+<p id="reviewNotice" role="status" hidden></p>
+<label class="feature"><span><strong>Clean shared links</strong><small>Remove tracking from copied X links.</small></span><input id="stripTrackingLinks" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span></label>
+<label class="feature"><span><strong>Photo actions menu</strong><small>Right-click photos to save or copy the image.</small></span><input id="restoreImageMenu" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span></label>
+<label class="feature"><span><strong>Mute by location</strong><small>Apply your saved country and region rules.</small></span><input id="enabled" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span></label>
+<button id="open">Manage mute rules <span aria-hidden="true">↗</span></button>
+<p id="status" role="status">Preferences save automatically.</p>
+</main><script src="popup.js"></script></body></html>

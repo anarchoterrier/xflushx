@@ -1,0 +1,77 @@
+{
+  "manifest_version": 3,
+  "name": "xflushx",
+  "version": "1.7.7",
+  "description": "Cleans copied X links and mutes accounts using locally cached country or region rules.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://pbs.twimg.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://*.x.com/*",
+        "https://twitter.com/*",
+        "https://*.twitter.com/*"
+      ],
+      "js": [
+        "clean-links.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "mute.js",
+        "image-menu.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "identity.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://*.x.com/*",
+        "https://twitter.com/*",
+        "https://*.twitter.com/*"
+      ],
+      "js": [
+        "features.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "permissions": [
+    "storage",
+    "cookies",
+    "downloads",
+    "clipboardWrite",
+    "alarms"
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "xflushx",
+    "default_popup": "popup.html"
+  }
+}
