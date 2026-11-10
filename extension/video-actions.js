@@ -16,11 +16,16 @@ function collectPostVideos(data){
  }
  return [...unique.values()];
 }
+function videoFilename(postId,now=new Date()){
+ const stamp=now.toISOString().replace('T','_').replace(/[:.]/g,'-');
+ const post=typeof postId==='string'&&/^\d{1,25}$/.test(postId)?'-post-'+postId:'';
+ return 'xflushx-video'+post+'-'+stamp+'.mp4';
+}
 async function videoAction(message){
  const settings=await chrome.storage.local.get({restoreImageMenu:false});if(!settings.restoreImageMenu)throw Error('Photo actions menu is disabled.');
  if(message.type==='video-save'){
   if(!validVideoUrl(message.url))throw Error('No downloadable MP4 source is available for this video.');
-  await chrome.downloads.download({url:message.url,filename:'xflushx-video.mp4',saveAs:true});return {ok:true};
+  await chrome.downloads.download({url:message.url,filename:videoFilename(message.postId),conflictAction:'uniquify',saveAs:true});return {ok:true};
  }
  if(typeof message.postId!=='string'||!/^\d{1,25}$/.test(message.postId))throw Error('Invalid post ID.');
  const response=await fetch('https://cdn.syndication.twimg.com/tweet-result?'+new URLSearchParams({id:message.postId,token:'0'}),{credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15000)});

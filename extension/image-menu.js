@@ -61,7 +61,7 @@
     if(!video&&!image)continue;
     if(!container&&media!==node){const r=media.getBoundingClientRect();if(!Number.isFinite(event.clientX)||event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)continue;}
     const source=video?.currentSrc||video?.src||'';
-    try{const u=new URL(source);if(u.protocol==='https:'&&u.hostname==='video.twimg.com'&&/^\/(?:ext_tw_video|amplify_video)\/[^?#]+\.mp4$/i.test(u.pathname))return {url:u.href,poster:video.poster||''};}catch{}
+    try{const u=new URL(source);if(u.protocol==='https:'&&u.hostname==='video.twimg.com'&&/^\/(?:ext_tw_video|amplify_video)\/[^?#]+\.mp4$/i.test(u.pathname))return {url:u.href,postId:postSource(node,video.poster)?.postId,poster:video.poster||''};}catch{}
     const poster=video?.poster||image?.currentSrc||image?.src||'';
     if(image&&!/pbs\.twimg\.com\/(?:amplify_video_thumb|ext_tw_video_thumb|tweet_video_thumb)\//.test(poster))continue;
     const result=postSource(node,poster);if(result)return result;
@@ -88,7 +88,7 @@
   if(isVideo){
    let sourcePromise;
    function resolveVideo(){if(!sourcePromise)sourcePromise=url.startsWith('post:')?photoRequest({type:'video-source',postId:url.slice(5),poster:video.poster}):Promise.resolve({url,type:'video'});return sourcePromise.catch(error=>{sourcePromise=null;throw error;});}
-   action('Save video…',async()=>{status.textContent='Finding downloadable video…';const result=await resolveVideo();await photoRequest({type:'video-save',url:result.url});});
+   action('Save video…',async()=>{status.textContent='Finding downloadable video…';const result=await resolveVideo();await photoRequest({type:'video-save',url:result.url,postId:video.postId||(url.startsWith('post:')?url.slice(5):undefined)});});
    action('Copy video address',async()=>navigator.clipboard.writeText((await resolveVideo()).url));
    // Blob-backed GIF players cannot be classified until X metadata resolves.
    if(gifUrl?.startsWith('post:'))action('Save as animated GIF…',async()=>{
