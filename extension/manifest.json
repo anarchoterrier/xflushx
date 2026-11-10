@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "xflushx",
-  "version": "1.7.7",
+  "version": "1.19.1",
   "description": "Cleans copied X links and mutes accounts using locally cached country or region rules.",
   "background": {
     "service_worker": "background.js"
@@ -9,7 +9,9 @@
   "host_permissions": [
     "https://x.com/*",
     "https://twitter.com/*",
-    "https://pbs.twimg.com/*"
+    "https://pbs.twimg.com/*",
+    "https://video.twimg.com/*",
+    "https://cdn.syndication.twimg.com/*"
   ],
   "content_scripts": [
     {
@@ -32,8 +34,14 @@
         "https://twitter.com/*"
       ],
       "js": [
+        "geography.js",
+        "regions.js",
+        "quote-authors.js",
         "mute.js",
-        "image-menu.js"
+        "gif-encoder.js",
+        "gif-convert.js",
+        "image-menu.js",
+        "country-labels.js"
       ],
       "run_at": "document_start"
     },

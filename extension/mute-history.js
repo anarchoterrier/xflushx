@@ -11,7 +11,7 @@ async function syncMutePage(message){
  let job=(await chrome.storage.local.get(key))[key];
  if(message.restart||!job)job={viewer,origin,users:[],cursor:'-1',seen:[],startedAt:Date.now()};
  if(job.complete)return {complete:true,viewer,count:job.users.length};
- await chrome.storage.local.set({nextRequestAt:Date.now()+10000});
+ await chrome.storage.local.set({nextRequestAt:Date.now()+30000});
  try{
   const page=await X_API.listMutes(origin,csrf,job.cursor);
   const current=await readSession(origin);if(current.viewer!==viewer)throw Error('Signed-in account changed. Restart the sync.');
@@ -25,10 +25,11 @@ async function syncMutePage(message){
    // if a complete snapshot established that the account had been unmuted.
    for(const [k,v]of Object.entries(existing)){const m=k.match(/^mute:(\d+):(\d+)$/);if(m&&m[1]===viewer&&v.status==='muted'&&!present.has(m[2]))updates[k]={...v,lastSeenUnmutedAt:completedAt};}
    await chrome.storage.local.set({...updates,[snapshotKey]:{viewer,users:job.users,completedAt}});
+   for(const [key,log]of Object.entries(existing)){const m=key.match(/^mute:(\d+):(\d+)$/);if(m&&m[1]===viewer&&needsMuteReconciliation(log)&&completedAt>(log.time||0))await reconcileMuteState(viewer,m[2],log,present.has(m[2]),false);}
    await scheduleMuteEnrichment(viewer,origin,job.users);
   }
   return {viewer,count:job.users.length,complete:job.complete};
- }catch(e){job.error=e.message;await chrome.storage.local.set({[key]:job,lastMuteViewer:viewer});return {error:e.message,viewer,count:job.users.length};}
+ }catch(e){if(e.rateLimited)return {viewer,retryAfter:Math.max(1000,(await chrome.storage.local.get('rateLimitUntil')).rateLimitUntil-Date.now())};job.error=e.message;await chrome.storage.local.set({[key]:job,lastMuteViewer:viewer});return {error:e.message,viewer,count:job.users.length};}
 }
 async function scheduleMuteEnrichment(viewer,origin,users){
  const data=await chrome.storage.local.get(null);
@@ -58,12 +59,13 @@ async function enrichOneMute(){
   const item=job.pending[0],key='accountId:'+item.userId;
   if(!data[key]){
    let record={...item,status:'interrupted',label:'',checkedAt:Date.now(),error:'Location import interrupted; clear lookup to retry.'};
-   await chrome.storage.local.set({[key]:record,nextRequestAt:Date.now()+10000});
+   await chrome.storage.local.set({[key]:record,nextRequestAt:Date.now()+30000});
    try{Object.assign(record,await X_API.lookup(job.origin,item.handle,session.csrf,data.queryId||X_API.defaultQuery,item.userId),{error:''});}
-   catch(e){record.status='failed';record.error=e.message;if(e.pause)await chrome.storage.local.set({pauseReason:e.message});}
+   catch(e){record.status=e.rateLimited?'rate-limited':'failed';record.error=e.message;if(e.pause)await chrome.storage.local.set({pauseReason:e.message});}
    await chrome.storage.local.set({[key]:record});
    const modelSettings=await chrome.storage.local.get({locationAliases:{},locationCustom:[]});LOCATIONS.configure(modelSettings);await catchLocation(record);
   }
+  if((await chrome.storage.local.get(key))[key]?.status==='rate-limited')return;
   job.pending.shift();job.lastAttemptAt=Date.now();job.lastError=(await chrome.storage.local.get(key))[key]?.error||'';await chrome.storage.local.set({[jobKey]:job});return;
  }
 }

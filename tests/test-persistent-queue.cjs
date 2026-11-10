@@ -1,0 +1,11 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');const source=fs.readFileSync('tests/test-extension.cjs','utf8').split('(async()=>{')[0],harness=new Function('require',source+';return harness;')(require);
+(async()=>{
+ const h=harness();await vm.runInContext('tail',h.context);h.data.rateLimitUntil=Date.now()+600000;h.data.pauseReason='X returned HTTP 429';h.data.nextRequestAt=h.data.rateLimitUntil;
+ await h.send('alice');await h.send('bob');await h.send('alice');assert.equal(h.calls.length,0);assert.equal(Object.keys(h.data).filter(k=>k.startsWith('pendingAccount:')).length,2,'ID deduplication during cooldown');
+ const restart=harness();await vm.runInContext('tail',restart.context);Object.assign(restart.data,structuredClone(h.data));await vm.runInContext('drainAccountQueue()',restart.context);assert.equal(restart.calls.length,0);
+ restart.data.rateLimitUntil=Date.now()-1;restart.data.nextRequestAt=0;restart.data.rules=[];await vm.runInContext('drainAccountQueue()',restart.context);assert.equal(restart.calls.length,1);assert.equal(restart.data['accountId:42'].status,'known');assert.equal(restart.data['pendingAccount:99:42'],undefined);assert.ok(restart.data['pendingAccount:99:43']);
+ restart.data.nextRequestAt=0;await vm.runInContext('drainAccountQueue()',restart.context);assert.equal(restart.data['accountId:43'].status,'known');assert.equal(restart.data['pendingAccount:99:43'],undefined);
+ const disabled=harness();await vm.runInContext('tail',disabled.context);disabled.data.enabled=false;disabled.data['pendingAccount:99:42']={viewer:'99',userId:'42',handle:'alice',origin:'https://x.com'};await vm.runInContext('drainAccountQueue()',disabled.context);assert.equal(disabled.calls.length,0);assert.ok(disabled.data['pendingAccount:99:42']);
+ disabled.data.enabled=true;disabled.data['pendingAccount:99:42'].viewer='88';await vm.runInContext('drainAccountQueue()',disabled.context);assert.equal(disabled.calls.length,0,'other viewer jobs never run');
+ console.log('Accounts collected without network during cooldown, persistent ID queue, deduplication, automatic draining, disabled state and viewer scope passed.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

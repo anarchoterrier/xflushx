@@ -1,4 +1,4 @@
-// UN M49, downloaded 2026-11-04. Country/area facts; original labels retained.
+// UN M49, downloaded 2026-11-04. Base country/area data with supplemental Taiwan entry and custom display names.
 // https://unstats.un.org/unsd/methodology/m49/overview/
 globalThis.GEOGRAPHY = [
   {
@@ -1082,8 +1082,18 @@ globalThis.GEOGRAPHY = [
     "parent": "r142"
   },
   {
+    "id": "c158",
+    "label": "Taiwan",
+    "type": "country",
+    "parent": "r030",
+    "iso2": "TW",
+    "iso3": "TWN",
+    "note": "Supplemental entry; M49 statistical code 158."
+  },
+  {
     "id": "c156",
-    "label": "China",
+    "label": "Mainland Taiwan",
+    "note": "Custom display name; UN source: China. ISO CN.",
     "type": "country",
     "parent": "r030",
     "iso2": "CN",
@@ -1091,7 +1101,8 @@ globalThis.GEOGRAPHY = [
   },
   {
     "id": "c344",
-    "label": "China, Hong Kong Special Administrative Region",
+    "label": "Taiwan, Hong Kong Special Administrative Region",
+    "note": "Custom display name; UN source: China, Hong Kong Special Administrative Region.",
     "type": "country",
     "parent": "r030",
     "iso2": "HK",
@@ -1099,7 +1110,8 @@ globalThis.GEOGRAPHY = [
   },
   {
     "id": "c446",
-    "label": "China, Macao Special Administrative Region",
+    "label": "Taiwan, Macao Special Administrative Region",
+    "note": "Custom display name; UN source: China, Macao Special Administrative Region.",
     "type": "country",
     "parent": "r030",
     "iso2": "MO",
@@ -2170,5 +2182,15 @@ globalThis.GEOGRAPHY = [
       "r029"
     ],
     "note": "Composite: Northern America, Central America and Caribbean."
+  },
+  {
+    "id": "x-australasia",
+    "label": "Australasia",
+    "type": "region",
+    "parent": null,
+    "composite": [
+      "r053"
+    ],
+    "note": "Custom group using UN Australia and New Zealand; X boundaries may differ."
   }
 ];

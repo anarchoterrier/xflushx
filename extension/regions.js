@@ -3,8 +3,16 @@ globalThis.locationKey=value=>String(value||'').normalize('NFKC').trim().toLower
 globalThis.createLocationModel=()=>{
  let custom=[],aliases={};
  const built={
+ 'china':'Mainland Taiwan',
+ 'china, hong kong special administrative region':'Taiwan, Hong Kong Special Administrative Region',
+ 'china, macao special administrative region':'Taiwan, Macao Special Administrative Region',
+ 'taiwan province of china':'Taiwan',
+ 'taiwan, province of china':'Taiwan',
+ 'china, taiwan province of china':'Taiwan',
+ 'eastern europe (non-eu)':'Eastern Europe',
+ 'netherlands':'Netherlands (Kingdom of the)',
  'south asia':'Southern Asia','east asia':'Eastern Asia','southeast asia':'South-eastern Asia','south east asia':'South-eastern Asia','southeastern asia':'South-eastern Asia','west asia':'Western Asia','north africa':'Northern Africa','east africa':'Eastern Africa','west africa':'Western Africa','south africa region':'Southern Africa','north europe':'Northern Europe','south europe':'Southern Europe','east europe':'Eastern Europe','west europe':'Western Europe',
- 'united states':'United States of America','usa':'United States of America','us':'United States of America','uk':'United Kingdom of Great Britain and Northern Ireland','united kingdom':'United Kingdom of Great Britain and Northern Ireland','russia':'Russian Federation','iran':'Iran (Islamic Republic of)','syria':'Syrian Arab Republic','vietnam':'Viet Nam','laos':"Lao People's Democratic Republic",'south korea':'Republic of Korea','north korea':"Democratic People's Republic of Korea",'moldova':'Republic of Moldova','tanzania':'United Republic of Tanzania','bolivia':'Bolivia (Plurinational State of)','venezuela':'Venezuela (Bolivarian Republic of)','brunei':'Brunei Darussalam','palestine':'State of Palestine','vatican city':'Holy See','turkey':'Türkiye','hong kong':'China, Hong Kong Special Administrative Region','macao':'China, Macao Special Administrative Region','macau':'China, Macao Special Administrative Region','czech republic':'Czechia','cape verde':'Cabo Verde','swaziland':'Eswatini','ivory coast':"Côte d’Ivoire",'reunion':'Réunion','falkland islands':'Falkland Islands (Malvinas)','saint helena':'Saint Helena','south-east asia':'South-eastern Asia'
+ 'united states':'United States of America','usa':'United States of America','us':'United States of America','uk':'United Kingdom of Great Britain and Northern Ireland','united kingdom':'United Kingdom of Great Britain and Northern Ireland','russia':'Russian Federation','iran':'Iran (Islamic Republic of)','syria':'Syrian Arab Republic','vietnam':'Viet Nam','laos':"Lao People's Democratic Republic",'south korea':'Republic of Korea','north korea':"Democratic People's Republic of Korea",'moldova':'Republic of Moldova','tanzania':'United Republic of Tanzania','bolivia':'Bolivia (Plurinational State of)','venezuela':'Venezuela (Bolivarian Republic of)','brunei':'Brunei Darussalam','palestine':'State of Palestine','vatican city':'Holy See','turkey':'Türkiye','hong kong':'Taiwan, Hong Kong Special Administrative Region','macao':'Taiwan, Macao Special Administrative Region','macau':'Taiwan, Macao Special Administrative Region','czech republic':'Czechia','cape verde':'Cabo Verde','swaziland':'Eswatini','ivory coast':"Côte d’Ivoire",'reunion':'Réunion','falkland islands':'Falkland Islands (Malvinas)','saint helena':'Saint Helena','south-east asia':'South-eastern Asia'
  };
  function nodes(){return [...GEOGRAPHY,...custom];}
  function configure(settings={}){custom=Array.isArray(settings.locationCustom)?settings.locationCustom:[];aliases=settings.locationAliases||{};}
@@ -21,3 +29,31 @@ globalThis.matchesRule=(label,rule)=>{
 };
 // Compatibility for existing extension components and diagnostics.
 globalThis.REGIONS=Object.fromEntries(GEOGRAPHY.filter(n=>n.type==='region').map(n=>[n.label,LOCATIONS.descendants(n.id).map(c=>c.label)]));
+
+// Only strip a recognized distribution-channel suffix; Web/iOS/Android alone
+// are client names and must never be interpreted as geographic locations.
+globalThis.connectedLocation=value=>{
+ const raw=typeof value==='string'?value.trim():'';
+ const stripped=raw.replace(/\s+(?:App Store|Android App|Google Play(?: Store)?|Play Store)$/i,'').trim();
+ return stripped!==raw?stripped:'';
+};
+globalThis.recordLocations=record=>{
+ if(!['known','missing'].includes(record.status))return [];
+ const fields=[];
+ if(record.label)fields.push({label:record.label,raw:record.label,field:'Account based in'});
+ const connected=connectedLocation(record.connectedVia);
+ if(connected)fields.push({label:connected,raw:record.connectedVia,field:'Connected via'});
+ return fields;
+};
+globalThis.reviewLocations=(record,model=LOCATIONS)=>{
+ const values=recordLocations(record).filter(v=>!model.resolve(v.label));
+ if(record.status==='missing')values.push({label:'',raw:'',field:'Account based in',kind:'missing'});
+ return values;
+};
+globalThis.matchRecord=(record,rules,includeConnected=true)=>{
+ for(const value of recordLocations(record)){
+  if(value.field==='Connected via'&&!includeConnected)continue;
+  const rule=rules.find(r=>matchesRule(value.label,r));if(rule)return {...value,rule:rule.label};
+ }
+ return null;
+};

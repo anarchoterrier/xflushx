@@ -1,0 +1,16 @@
+# Local artifacts and private runtime data
+node_modules/
+outputs/
+work/
+*.log
+.env
+.env.*
+*.pem
+*.key
+*.crx
+*.zip
+*.har
+chrome-profile/
+profile/
+*local-storage*.json
+*cookie*.json
